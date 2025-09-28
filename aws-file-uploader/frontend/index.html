@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS File Uploader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #6b7280, #3b82f6);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+        .file-input {
+            display: none;
+        }
+        .file-label {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .file-label:hover {
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+        }
+        .spinner {
+            display: none;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .file-preview img {
+            transition: transform 0.3s ease;
+        }
+        .file-preview img:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="card p-8 w-full max-w-lg">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+            AWS File Uploader
+        </h1>
+
+        <div class="mb-6">
+            <label for="fileInput" class="file-label inline-block w-full text-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-medium shadow-md">
+                Choose File
+            </label>
+            <input type="file" id="fileInput" class="file-input" />
+            <p id="fileName" class="text-sm text-gray-500 mt-2 text-center">No file selected</p>
+            <div id="filePreview" class="file-preview mt-4 hidden">
+                <img id="previewImage" src="" alt="File preview" class="max-w-full h-auto rounded-lg shadow-md" />
+            </div>
+        </div>
+
+        <button onclick="uploadFile()" class="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-lg font-medium hover:from-green-600 hover:to-emerald-600 transition duration-300 shadow-md flex items-center justify-center">
+            <span id="uploadText">Upload</span>
+            <div id="spinner" class="spinner ml-2"></div>
+        </button>
+
+        <div id="message" class="mt-4 text-center text-sm font-medium text-gray-700"></div>
+
+        <ul id="fileList" class="mt-6 space-y-3">
+            <!-- Uploaded files will appear here -->
+        </ul>
+    </div>
+
+    <script>
+        // Update file name and preview when a file is selected
+        document.getElementById('fileInput').addEventListener('change', function() {
+            const file = this.files[0];
+            const fileName = file ? file.name : 'No file selected';
+            document.getElementById('fileName').textContent = fileName;
+
+            const previewDiv = document.getElementById('filePreview');
+            const previewImage = document.getElementById('previewImage');
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewDiv.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewDiv.classList.add('hidden');
+            }
+        });
+
+        async function uploadFile() {
+            const file = document.getElementById('fileInput').files[0];
+            const messageDiv = document.getElementById('message');
+            const spinner = document.getElementById('spinner');
+            const uploadText = document.getElementById('uploadText');
+
+            if (!file) {
+                messageDiv.textContent = 'Please select a file!';
+                messageDiv.classList.remove('text-green-500', 'text-blue-500');
+                messageDiv.classList.add('text-red-500');
+                return;
+            }
+
+            messageDiv.textContent = 'Uploading...';
+            messageDiv.classList.remove('text-red-500', 'text-green-500');
+            messageDiv.classList.add('text-blue-500');
+            spinner.style.display = 'block';
+            uploadText.textContent = 'Uploading...';
+
+            // Step 1: Get presigned URL from backend
+            const response = await fetch('http://localhost:8080/generate-presigned-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileName: file.name, fileType: file.type })
+            });
+
+            const data = await response.json();
+            const presignedUrl = data.url;
+
+            // Step 2: Upload file directly to S3
+            const upload = await fetch(presignedUrl, {
+                method: 'PUT',
+                body: file,
+                headers: { 'Content-Type': file.type }
+            });
+
+            spinner.style.display = 'none';
+            uploadText.textContent = 'Upload';
+
+            if (upload.ok) {
+                messageDiv.textContent = 'File uploaded successfully!';
+                messageDiv.classList.remove('text-blue-500', 'text-red-500');
+                messageDiv.classList.add('text-green-500');
+                const s3Url = presignedUrl.split('?')[0];
+                const fileList = document.getElementById('fileList');
+                const li = document.createElement('li');
+                li.innerHTML = `<a href="${s3Url}" target="_blank" class="text-blue-600 hover:underline font-medium">${file.name}</a>`;
+                li.classList.add('p-2', 'bg-gray-50', 'rounded-lg', 'shadow-sm', 'transition', 'hover:bg-gray-100');
+                fileList.appendChild(li);
+            } else {
+                messageDiv.textContent = 'Upload failed!';
+                messageDiv.classList.remove('text-blue-500', 'text-green-500');
+                messageDiv.classList.add('text-red-500');
+            }
+        }
+    </script>
+</body>
+</html>
