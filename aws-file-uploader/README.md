@@ -1,107 +1,55 @@
-# Cloud & Serverless Intern Challenges
+# 🚀 Cloud File Uploader (Challenge 1)
 
-This repository contains two projects completed as part of the Cloud & Serverless internship challenges:
+## 📌 Objective  
+A simple web application that allows users to upload files (image/text) through a frontend form.  
+The backend stores files in **AWS S3** and returns a public link to access them.  
 
-1. **Cloud File Uploader** (Challenge 1)  
-2. **Serverless News Summarizer** (Challenge 2)
+This project demonstrates:  
+- Static frontend hosting on **Vercel**  
+- Backend API on **AWS Lambda + API Gateway**  
+- Cloud storage integration with **Amazon S3**  
 
 ---
 
-## Challenge 1: Cloud File Uploader
+## ⚙️ Setup Steps  
 
-### Objective
-A simple web application that allows users to upload files (image/text) through a frontend form.  
-The backend stores files in **AWS S3** and returns a public link to access the uploaded file.  
-Frontend is hosted on **Vercel**, backend is deployed on **AWS Lambda + API Gateway**.
+### 1. Frontend (Static HTML)  
+- Code: `/frontend/index.html`  
+- Hosted on **Vercel**  
+- Live Demo: [🔗 Click Here](https://aws-file-uploader-xzim4jqrk-shayanabtech22-8910s-projects.vercel.app/)  
 
-### Setup Steps
+### 2. Backend (Python Lambda API)  
+- Code: `/backend/`  
+- AWS Lambda function written in Python.  
+- Handles file upload, saves to **AWS S3**, and returns file URL.  
 
-#### Frontend
-- Path: `/aws-file-uploader/frontend/index.html`  
-- Hosted on **Vercel**: [🔗 Live Demo](https://your-vercel-link.vercel.app)  
-
-#### Backend
-- Path: `/aws-file-uploader/backend/`  
-- AWS Lambda function in Python  
-- Stores uploaded files in **AWS S3**  
-- Exposed via **API Gateway POST endpoint**
-
-##### Deployment Steps
+#### Deployment Steps  
 1. Zip backend code (`app.py`, `requirements.txt`).  
 2. Deploy to **AWS Lambda**.  
-3. Configure **API Gateway** with POST endpoint `/upload`.  
-4. Enable **CORS** for frontend requests.  
-5. Update frontend `fetch()` calls to point to API Gateway URL.
-
-### Challenges & Assumptions
-- Configuring **CORS** for cross-origin requests.  
-- Used **pre-signed URLs** for secure file upload.  
-- Assumed small files (<5 MB) due to Lambda runtime limits.
-
-### Reflection
-- Learned end-to-end integration: frontend → backend → S3.  
-- Tricky part: handling secrets securely with `.env` and Lambda environment variables.  
-- Learned practical **Vercel hosting** and **AWS Lambda deployment**.
+3. Configure **API Gateway** with a POST endpoint `/upload`.  
+4. Enable **CORS** in API Gateway for frontend requests.  
+5. Update the frontend `fetch()` call to use your API Gateway endpoint.  
 
 ---
 
-## Challenge 2: Serverless News Summarizer
+## 🛠️ Challenges & Assumptions  
+- Configuring **CORS** between Vercel frontend and AWS backend required extra headers.  
+- Used **pre-signed S3 URLs** for secure uploads.  
+- Assumed small file sizes (<5 MB) due to AWS Lambda runtime limits.  
 
-### Objective
-A serverless function that accepts a news article URL and returns a summarized version using a free NLP API.  
-Deployed on **AWS Lambda** with **API Gateway** for HTTP access.
+---
 
-### Setup Steps
+## 🤖 Use of AI Tooling  
+- Used **ChatGPT** to generate boilerplate code for:  
+  - Python Lambda + S3 integration  
+  - Debugging CORS headers  
+- README structure generated with AI assistance, refined manually.  
 
-1. Clone repository:
-```bash
-git clone https://github.com/Shayan56/ProgressAssignment.git
-cd lambda_news_summarizer
+---
 
-Configure AWS Lambda:
+## 📌 Reflection  
+- Learned how to connect **frontend → backend → S3** end-to-end.  
+- The trickiest part was handling **secrets and environment variables** securely.  
+- Gained practical experience with **Vercel** hosting and **AWS Lambda** deployment.  
 
-Create a new Lambda function (Python runtime).
-
-Upload lambda_function.py.
-
-Configure API Gateway POST endpoint.
-
-Add NLP API key as an environment variable.
-
-Install dependencies (for local testing):
-
-pip install -r requirements.txt
-
-
-Invoke function using curl:
-
-curl -X POST <API_GATEWAY_URL> \
--H "Content-Type: application/json" \
--d '{"url": "https://example.com/sample-news"}'
-
-Example Response
-{
-  "summary": "The article highlights recent advancements in AI and cloud computing..."
-}
-
-Challenges & Assumptions
-
-Free NLP APIs have rate limits.
-
-Assumes input URLs are valid public news articles.
-
-CORS configuration needed for testing from external clients.
-
-Reflection
-
-Learned to deploy serverless functions with AWS Lambda + API Gateway.
-
-Learned integration with external NLP APIs.
-
-Tricky part: handling API authentication and error responses properly.
-
-AI Tooling Used
-
-ChatGPT: Assisted in generating boilerplate Lambda code, S3 integration, API calls, and error handling.
-
-Helped structure README.md, write reflections, and debug CORS issues.
+---
